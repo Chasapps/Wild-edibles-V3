@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Wild Fruit Mapper — Pro</title>
+  <meta name="theme-color" content="#2c7be5">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="appbar">
+    <h1>🍊 Wild Fruit Mapper</h1>
+    <div class="actions">
+      <button id="locateBtn" title="Go to my location">📍</button>
+      <button id="addBtn" class="primary">＋ Add Tree</button>
+      <details class="menu">
+        <summary>☰</summary>
+        <div class="menu-panel">
+          <button id="exportBtn">Export GeoJSON</button>
+          <label class="import-label">
+            Import GeoJSON
+            <input type="file" id="importInput" accept=".json,.geojson,application/geo+json,application/json">
+          </label>
+          <label class="import-label">Load Catalog JSON<input type="file" id="catalogInput" accept="application/json"></label>
+          <button id="statsBtn">Stats</button>
+          <label class="switch-row"><input id="clusterToggle" type="checkbox" checked> Cluster markers</label>
+          <button id="clearBtn" class="danger">Clear All</button>
+        </div>
+      </details>
+    </div>
+  </header>
+
+  <aside class="filters" id="filters">
+    <div class="f-head">
+      <strong>Filters</strong>
+      <button id="resetFilters" class="link">Reset</button>
+    </div>
+    <div class="f-body">
+      <label>Category<select id="categorySelect" required>
+            <option value="native_fruits">🇦🇺 Native fruits</option>
+            <option value="common_fruits">🍊 Common fruits</option>
+            <option value="edible_plants">🌿 Edible plants</option>
+          </select></label>
+
+      <label>Fruit type
+        <select id="fType" multiple size="6" title="Hold Ctrl/Cmd to multi-select">
+        </select>
+      </label>
+      <div class="grid2">
+        <label>Season
+          <select id="fSeason">
+            <option value="">Any</option>
+            <option>Summer</option><option>Autumn</option><option>Winter</option><option>Spring</option>
+          </select>
+        </label>
+        <label>Ripeness
+          <select id="fRipeness">
+            <option value="">Any</option>
+            <option>Unripe</option><option>Ripening</option><option>Ripe</option><option>Overripe</option>
+          </select>
+        </label>
+      </div>
+      <label>Text search
+        <input id="fText" placeholder="Notes contain…">
+      </label>
+      <label class="switch-row"><input type="checkbox" id="fHasPhoto"> Has photo</label>
+      <button id="applyFilters" class="primary">Apply</button>
+    </div>
+  </aside>
+
+  <main id="map"></main>
+
+  <dialog id="formDialog">
+    <form method="dialog" id="treeForm">
+      <h2 id="formTitle">Add Tree</h2>
+
+      <label>Category<select id="categorySelect" required>
+            <option value="native_fruits">🇦🇺 Native fruits</option>
+            <option value="common_fruits">🍊 Common fruits</option>
+            <option value="edible_plants">🌿 Edible plants</option>
+          </select></label>
+
+      <label>Fruit type
+        <div class="fruit-row">
+          <select id="fruitSelect">
+            <option value="Other">Other…</option>
+            <option value="Apple">🍎 Apple</option>
+            <option value="Pear">🍐 Pear</option>
+            <option value="Plum">🍑 Plum</option>
+            <option value="Peach">🍑 Peach</option>
+            <option value="Apricot">🍑 Apricot</option>
+            <option value="Orange">🍊 Orange</option>
+            <option value="Lemon">🍋 Lemon</option>
+            <option value="Lime">🍈 Lime</option>
+            <option value="Grapefruit">🍊 Grapefruit</option>
+            <option value="Mulberry">🫐 Mulberry</option>
+            <option value="Fig">🟣 Fig</option>
+            <option value="Olive">🫒 Olive</option>
+            <option value="Loquat">🍑 Loquat</option>
+            <option value="Cherry">🍒 Cherry</option>
+            <option value="Banana">🍌 Banana</option>
+            <option value="Mango">🥭 Mango</option>
+            <option value="Guava">🥭 Guava</option>
+            <option value="Feijoa">🥝 Feijoa</option>
+            <option value="Persimmon">🟠 Persimmon</option>
+            <option value="Pomegranate">🔴 Pomegranate</option>
+            <option value="Berry">🫐 Berry</option>
+          </select>
+          <input id="fruitCustom" placeholder="Type (if Other)" />
+        </div>
+      </label>
+
+      <div class="grid2">
+        <label>Season
+          <select id="season">
+            <option value="">Unknown</option>
+            <option>Summer</option>
+            <option>Autumn</option>
+            <option>Winter</option>
+            <option>Spring</option>
+          </select>
+        </label>
+        <label>Ripeness
+          <select id="ripeness">
+            <option value="">Unknown</option>
+            <option>Unripe</option>
+            <option>Ripening</option>
+            <option>Ripe</option>
+            <option>Overripe</option>
+          </select>
+        </label>
+      </div>
+
+      <label>Notes
+        <textarea id="notes" rows="3" placeholder="e.g., fence line on east side, good access, ask homeowner"></textarea>
+      </label>
+
+      <div class="grid2">
+        <label>Latitude
+          <input id="lat" type="number" step="any" required>
+        </label>
+        <label>Longitude
+          <input id="lng" type="number" step="any" required>
+        </label>
+      </div>
+
+      <label class="photo">Photo (optional)
+        <input id="photoInput" type="file" accept="image/*" capture="environment">
+      </label>
+
+      <menu>
+        <button value="cancel" id="cancelBtn">Cancel</button>
+        <button value="default" class="primary" id="saveBtn">Save</button>
+      </menu>
+      <input type="hidden" id="editingId">
+    </form>
+  </dialog>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <template id="popupTpl">
+    <div class="popup">
+      <div class="title"><span class="emoji"></span><strong class="name"></strong></div>
+      <div class="coords"></div>
+      <div class="meta"></div>
+      <div class="photoWrap"></div>
+      <div class="notes"></div>
+      <div class="btnrow">
+        <button data-action="edit">Edit</button>
+        <button data-action="delete" class="danger">Delete</button>
+      </div>
+    </div>
+  </template>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,258 @@
+{
+  "native_fruits": [
+    {
+      "name": "Finger Lime",
+      "emoji": "🍈",
+      "notes": "Citrus caviar native lime, QLD–NSW rainforests."
+    },
+    {
+      "name": "Kakadu Plum",
+      "emoji": "🍏",
+      "notes": "Super-high vitamin C, NT / WA."
+    },
+    {
+      "name": "Davidson’s Plum",
+      "emoji": "🍑",
+      "notes": "Deep purple rainforest plum."
+    },
+    {
+      "name": "Riberry (Lilly Pilly)",
+      "emoji": "🍒",
+      "notes": "Tangy small red fruit."
+    },
+    {
+      "name": "Quandong (Native Peach)",
+      "emoji": "🍒",
+      "notes": "Bright red desert fruit used in pies/jams."
+    },
+    {
+      "name": "Muntries",
+      "emoji": "🍇",
+      "notes": "Tiny apple-flavoured berries from SA."
+    },
+    {
+      "name": "Midyim Berry",
+      "emoji": "🍓",
+      "notes": "Sweet speckled berry (NSW coast)."
+    },
+    {
+      "name": "Desert Lime",
+      "emoji": "🍋",
+      "notes": "Arid-zone citrus."
+    },
+    {
+      "name": "Bush Tomato",
+      "emoji": "🍅",
+      "notes": "Dried and spiced in bush chutneys."
+    },
+    {
+      "name": "Illawarra Plum",
+      "emoji": "🍑",
+      "notes": "Fleshy purple cone-fruit; seed attached."
+    },
+    {
+      "name": "Emu Apple",
+      "emoji": "🍎",
+      "notes": "Tart red fruit with vitamin C."
+    },
+    {
+      "name": "Boab Nut",
+      "emoji": "🥜",
+      "notes": "Large pod with edible seed pulp."
+    },
+    {
+      "name": "Native Raspberry",
+      "emoji": "🍓",
+      "notes": "Found in east-coast forests."
+    },
+    {
+      "name": "Native Cherry",
+      "emoji": "🍒",
+      "notes": "Fruit grows beneath stem."
+    },
+    {
+      "name": "Native Currant",
+      "emoji": "🍇",
+      "notes": "Sweet wild berries (Coprosma quadrifida)."
+    },
+    {
+      "name": "Bush Coconut",
+      "emoji": "🥥",
+      "notes": "Galls with sweet interior liquid (in arid zones)."
+    },
+    {
+      "name": "Wattleseed",
+      "emoji": "🌰",
+      "notes": "Roasted, ground into coffee-like flour."
+    },
+    {
+      "name": "Macadamia Nut",
+      "emoji": "🥜",
+      "notes": "Iconic native nut from QLD/NSW."
+    },
+    {
+      "name": "Warrigal Greens",
+      "emoji": "🥬",
+      "notes": "Native spinach; blanched before eating."
+    },
+    {
+      "name": "Pigface Fruit",
+      "emoji": "🌺",
+      "notes": "Juicy, sweet coastal fruit of Carpobrotus."
+    }
+  ],
+  "common_fruits": [
+    {
+      "name": "Mulberry",
+      "emoji": "🍇",
+      "notes": "Common suburban & farm hedgerow tree."
+    },
+    {
+      "name": "Loquat",
+      "emoji": "🍑",
+      "notes": "Orange, tangy, grows prolifically in NSW."
+    },
+    {
+      "name": "Avocado",
+      "emoji": "🥑",
+      "notes": "Found in backyards across QLD / NSW."
+    },
+    {
+      "name": "Mango",
+      "emoji": "🥭",
+      "notes": "Native to tropics, naturalised north QLD."
+    },
+    {
+      "name": "Banana",
+      "emoji": "🍌",
+      "notes": "Wild stands near old plantations."
+    },
+    {
+      "name": "Guava",
+      "emoji": "🍈",
+      "notes": "Common feral fruit in QLD rainforests."
+    },
+    {
+      "name": "Passionfruit",
+      "emoji": "🪻",
+      "notes": "Often found climbing fences."
+    },
+    {
+      "name": "Fig",
+      "emoji": "🍈",
+      "notes": "Huge shady trees with edible figs."
+    },
+    {
+      "name": "Citrus (Lemon, Orange, Lime)",
+      "emoji": "🍋🍊",
+      "notes": "Widespread backyard trees."
+    },
+    {
+      "name": "Olive",
+      "emoji": "🫒",
+      "notes": "Escapes into bush near old groves."
+    },
+    {
+      "name": "Apple",
+      "emoji": "🍎",
+      "notes": "Grown commercially and occasionally feral."
+    },
+    {
+      "name": "Pear",
+      "emoji": "🍐",
+      "notes": "Cultivated in temperate zones."
+    },
+    {
+      "name": "Plum",
+      "emoji": "🍑",
+      "notes": "Common European varieties gone wild."
+    },
+    {
+      "name": "Cherry",
+      "emoji": "🍒",
+      "notes": "Cooler-climate regions."
+    },
+    {
+      "name": "Grape",
+      "emoji": "🍇",
+      "notes": "Often persist near homesteads."
+    },
+    {
+      "name": "Pomegranate",
+      "emoji": "🍎",
+      "notes": "Hardy naturalised shrub."
+    },
+    {
+      "name": "Strawberry Guava",
+      "emoji": "🍓",
+      "notes": "Red/purple small fruit; invasive in some areas."
+    },
+    {
+      "name": "Persimmon",
+      "emoji": "🧡",
+      "notes": "Backyard & orchard fruit, autumn ripening."
+    },
+    {
+      "name": "Pineapple",
+      "emoji": "🍍",
+      "notes": "QLD gardens and farms."
+    },
+    {
+      "name": "Papaya",
+      "emoji": "🥭",
+      "notes": "Tropical; also called pawpaw."
+    }
+  ],
+  "edible_plants": [
+    {
+      "name": "Lemon Myrtle",
+      "emoji": "🌿",
+      "notes": "Aromatic leaves for teas/flavouring."
+    },
+    {
+      "name": "River Mint",
+      "emoji": "🌿",
+      "notes": "Native mint, used in sauces/drinks."
+    },
+    {
+      "name": "Saltbush",
+      "emoji": "🌿",
+      "notes": "Savoury leaf for roasting or grazing."
+    },
+    {
+      "name": "Native Pepperberry",
+      "emoji": "🌶️",
+      "notes": "Tasmanian spice fruit."
+    },
+    {
+      "name": "Bush Basil",
+      "emoji": "🌿",
+      "notes": "Aromatic herb, pollinator-friendly."
+    },
+    {
+      "name": "Yam Daisy (Murnong)",
+      "emoji": "🥕",
+      "notes": "Traditional root crop."
+    },
+    {
+      "name": "Water Lily Seeds",
+      "emoji": "🌰",
+      "notes": "Edible seeds in northern wetlands."
+    },
+    {
+      "name": "Native Ginger",
+      "emoji": "🌸",
+      "notes": "Rhizome and fruit edible."
+    },
+    {
+      "name": "Wild Sorrel",
+      "emoji": "🍃",
+      "notes": "Lemon-tart herb in damp soils."
+    },
+    {
+      "name": "Kangaroo Apple",
+      "emoji": "🍆",
+      "notes": "Edible only when fully ripe (avoid green)."
+    }
+  ]
+}

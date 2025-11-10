@@ -1,0 +1,61 @@
+/* Pro styles with filter panel + clustering toggle */
+:root{
+  --bg:#f7f9fc; --ink:#0d2236; --muted:#5a6b7b;
+  --accent:#2c7be5; --accent-ink:white; --danger:#e23;
+  --card:#ffffff; --shadow: 0 6px 24px rgba(0,0,0,0.08);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;display:grid;grid-template-columns:280px 1fr;grid-template-rows:56px 1fr;grid-template-areas:'appbar appbar' 'filters map'}
+
+.appbar{grid-area:appbar;position:sticky;top:0;display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--card);box-shadow:var(--shadow);z-index:10}
+.appbar h1{font-size:16px;margin:0;white-space:nowrap}
+.actions{margin-left:auto;display:flex;align-items:center;gap:8px}
+.actions button{padding:8px 10px;border:1px solid #0001;background:#fff;border-radius:10px;cursor:pointer}
+.actions button.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.actions .menu{position:relative}
+.actions .menu summary{list-style:none;cursor:pointer;padding:8px 10px;border:1px solid #0001;background:#fff;border-radius:10px}
+.actions .menu summary::-webkit-details-marker{display:none}
+.menu-panel{position:absolute;right:0;top:120%;display:grid;gap:6px;background:var(--card);padding:10px;border:1px solid #0002;border-radius:12px;box-shadow:var(--shadow);min-width:200px}
+.import-label{display:grid;gap:4px}
+.switch-row{display:flex;align-items:center;gap:8px}
+.menu-panel button{padding:8px 10px;border:1px solid #0001;background:#fff;border-radius:10px;cursor:pointer;text-align:left}
+.menu-panel button.danger{background:#fee;border-color:#fbb;color:#a00}
+
+.filters{grid-area:filters;background:var(--card);border-right:1px solid #0001;display:grid;grid-template-rows:auto 1fr;min-height:0}
+.f-head{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #0001}
+.f-body{padding:12px;display:grid;gap:10px;overflow:auto}
+#resetFilters.link{background:none;border:none;color:var(--accent);cursor:pointer}
+label{display:grid;gap:6px;font-size:14px}
+input,select,textarea{padding:9px;border:1px solid #0002;border-radius:10px;background:#fff}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent;padding:9px;border-radius:10px;cursor:pointer}
+
+#map{grid-area:map;position:relative}
+#map, .leaflet-container{height:calc(100vh - 56px)}
+
+dialog{border:none;border-radius:16px;box-shadow:var(--shadow);padding:0;max-width:520px;width:92vw}
+dialog::backdrop{background:rgba(0,0,0,.3)}
+form{display:grid;gap:10px;padding:16px}
+h2{margin:6px 0 4px}
+.photo input{padding:6px}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#111;color:#fff;padding:10px 14px;border-radius:12px;opacity:0;transition:opacity .3s;z-index:1001}
+#toast.show{opacity:1}
+
+.popup{min-width:220px;display:grid;gap:6px}
+.popup .title{display:flex;align-items:center;gap:6px}
+.popup .coords{color:var(--muted);font-size:12px}
+.popup .meta{color:var(--muted);font-size:12px}
+.popup .photoWrap img{max-width:220px;border-radius:10px;display:block}
+.popup .btnrow{display:flex;gap:8px;margin-top:6px}
+
+@media (max-width: 900px){
+  body{grid-template-columns:1fr;grid-template-rows:56px auto 1fr;grid-template-areas:'appbar' 'filters' 'map'}
+}
+
+/* --- FIX: allow header menu to open above the Leaflet map --- */
+.actions .menu { position: relative; z-index: 1001; }
+.actions .menu-panel { pointer-events: auto; z-index: 1002; }
+.leaflet-container { z-index: 0 !important; } /* keep map below header UI */
+
