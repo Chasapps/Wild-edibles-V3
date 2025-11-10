@@ -1,5 +1,9 @@
-/* Wild Fruit Mapper — Pro (Filters + Clustering) */
+
+/* Wild Fruit Mapper — Pro (with Categories + Catalog or GeoJSON Import) */
+
 const LS_KEY = 'wild_fruit_trees_v1';
+const MASTER_LS_KEY = 'wild_fruit_master_v1';
+
 const FRUIT_EMOJI = {
   Apple:'🍎', Pear:'🍐', Plum:'🍑', Peach:'🍑', Apricot:'🍑',
   Orange:'🍊', Grapefruit:'🍊', Lemon:'🍋', Lime:'🍈',
@@ -7,22 +11,34 @@ const FRUIT_EMOJI = {
   Cherry:'🍒', Banana:'🍌', Mango:'🥭', Guava:'🥭', Feijoa:'🥝',
   Persimmon:'🟠', Other:'🌱', Pomegranate:'🔴'
 };
-// --- Catalog (master list) handling ---
-const MASTER_LS_KEY = 'wild_fruit_master_v1';
-let MASTER = { native_fruits: [], common_fruits: [], edible_plants: [] };
 
-// Try load from localStorage on boot
+const DEFAULT_CATALOG = {
+  native_fruits: [
+    {name:"Finger Lime",emoji:"🍈"}, {name:"Kakadu Plum",emoji:"🍏"},
+    {name:"Riberry (Lilly Pilly)",emoji:"🍒"}, {name:"Quandong (Native Peach)",emoji:"🍒"},
+    {name:"Muntries",emoji:"🍇"}, {name:"Midyim Berry",emoji:"🍓"}, {name:"Desert Lime",emoji:"🍋"}
+  ],
+  common_fruits: [
+    {name:"Mulberry",emoji:"🍇"}, {name:"Loquat",emoji:"🍑"}, {name:"Avocado",emoji:"🥑"},
+    {name:"Mango",emoji:"🥭"}, {name:"Banana",emoji:"🍌"}, {name:"Fig",emoji:"🟣"}, {name:"Olive",emoji:"🫒"}
+  ],
+  edible_plants: [
+    {name:"Warrigal Greens",emoji:"🥬"}, {name:"Lemon Myrtle",emoji:"🌿"},
+    {name:"River Mint",emoji:"🌿"}, {name:"Saltbush",emoji:"🌿"}
+  ]
+};
+
+let MASTER = DEFAULT_CATALOG;
 try { const raw = localStorage.getItem(MASTER_LS_KEY); if (raw) MASTER = JSON.parse(raw); } catch {}
 
 function emojiForName(name){
   if (FRUIT_EMOJI[name]) return FRUIT_EMOJI[name];
-  for (const k of ['native_fruits','common_fruits','edible_plants']){
-    const hit = (MASTER[k]||[]).find(x => x.name === name);
+  for (const bucket of ['native_fruits','common_fruits','edible_plants']) {
+    const hit = (MASTER[bucket]||[]).find(x => x.name === name);
     if (hit && hit.emoji) return hit.emoji;
   }
   return '🌱';
 }
-
 
 const map = L.map('map');
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -31,7 +47,6 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 map.setView([-33.8688, 151.2093], 12);
 
-// --- FIX: prevent Leaflet map from blocking taps on the header/menu ---
 try {
   const appbarEl = document.querySelector('.appbar');
   if (appbarEl) {
@@ -39,7 +54,6 @@ try {
     L.DomEvent.disableScrollPropagation(appbarEl);
   }
 } catch (_) {}
-
 
 let clusterLayer = L.markerClusterGroup({ maxClusterRadius: 60 });
 let plainLayer = L.layerGroup();
@@ -49,16 +63,14 @@ let useCluster = true;
 let trees = loadTrees();
 let markerIndex = new Map();
 
-// UI
 const locateBtn = document.getElementById('locateBtn');
 const addBtn = document.getElementById('addBtn');
 const exportBtn = document.getElementById('exportBtn');
 const importInput = document.getElementById('importInput');
 const statsBtn = document.getElementById('statsBtn');
 const clearBtn = document.getElementById('clearBtn');
-const catalogInput = document.getElementById('catalogInput');
-const categorySelect = document.getElementById('categorySelect');
 const clusterToggle = document.getElementById('clusterToggle');
+const catalogInput = document.getElementById('catalogInput');
 
 const dialogEl = document.getElementById('formDialog');
 const form = document.getElementById('treeForm');
@@ -72,6 +84,7 @@ const lat = document.getElementById('lat');
 const lng = document.getElementById('lng');
 const photoInput = document.getElementById('photoInput');
 const editingId = document.getElementById('editingId');
+const categorySelect = document.getElementById('categorySelect');
 
 const fType = document.getElementById('fType');
 const fSeason = document.getElementById('fSeason');
@@ -82,9 +95,8 @@ const applyFiltersBtn = document.getElementById('applyFilters');
 const resetFiltersBtn = document.getElementById('resetFilters');
 
 const popupTpl = document.getElementById('popupTpl');
-const toastEl = document.getElementById('toast');
 
-(function initTypeOptions(){
+(function initFilterTypeOptions(){
   const set = new Set(['Apple','Pear','Plum','Peach','Apricot','Orange','Lemon','Lime','Grapefruit','Mulberry','Fig','Olive','Loquat','Cherry','Banana','Mango','Guava','Feijoa','Persimmon','Pomegranate','Berry','Other']);
   for (const t of set){
     const opt = document.createElement('option');
@@ -93,20 +105,16 @@ const toastEl = document.getElementById('toast');
   }
 })();
 
-
 function getNamesForCategory(catKey){
   const list = (MASTER[catKey] || []).map(x => x.name);
-  if (list.length) return list;
-  // Fallback legacy set
-  const legacy = new Set(['Apple','Pear','Plum','Peach','Apricot','Orange','Lemon','Lime','Grapefruit','Mulberry','Fig','Olive','Loquat','Cherry','Banana','Mango','Guava','Feijoa','Persimmon','Pomegranate','Berry','Other']);
-  return Array.from(legacy).sort();
+  if (list && list.length) return list;
+  return (DEFAULT_CATALOG[catKey] || []).map(x=>x.name);
 }
-
 function refillFruitOptions(){
   if (!fruitSelect) return;
-  fruitSelect.innerHTML = '';
   const catKey = categorySelect?.value || 'native_fruits';
   const names = getNamesForCategory(catKey);
+  fruitSelect.innerHTML = '';
   for (const t of names){
     const opt = document.createElement('option');
     opt.value = t; opt.textContent = `${emojiForName(t)} ${t}`;
@@ -115,8 +123,10 @@ function refillFruitOptions(){
   const otherOpt = document.createElement('option');
   otherOpt.value = 'Other'; otherOpt.textContent = '🌱 Other (custom)';
   fruitSelect.appendChild(otherOpt);
+  fruitSelect.value = names[0] || 'Other';
   if (fruitCustom) fruitCustom.value = '';
 }
+categorySelect?.addEventListener('change', refillFruitOptions);
 
 renderAll();
 
@@ -143,11 +153,7 @@ function saveTrees(){ localStorage.setItem(LS_KEY, JSON.stringify(trees)); }
 
 function buildMarker(tree){
   const emoji = emojiForName(tree.type);
-  const icon = L.divIcon({
-    className:'fruit-icon',
-    html:`<div style="font-size:24px">${emoji}</div>`,
-    iconSize:[24,24], iconAnchor:[12,12]
-  });
+  const icon = L.divIcon({ className:'fruit-icon', html:`<div style="font-size:24px">${emoji}</div>`, iconSize:[24,24], iconAnchor:[12,12] });
   const m = L.marker([tree.lat, tree.lng], { icon });
   m.bindPopup(renderPopup(tree));
   return m;
@@ -193,7 +199,7 @@ function renderPopup(tree){
   tpl.querySelector('.name').textContent = ` ${tree.type}` + (tree.ripeness?` • ${tree.ripeness}`:'');
   tpl.querySelector('.coords').textContent = `${tree.lat.toFixed(6)}, ${tree.lng.toFixed(6)}`;
   const meta = [];
-  if (tree.category){ meta.push({native_fruits:'🇦🇺 Native',common_fruits:'🍊 Common',edible_plants:'🌿 Edible plant'}[tree.category]||tree.category); }
+  if (tree.category){ meta.push({native_fruits:'🇦🇺 Native',common_fruits:'🍊 Common',edible_plants:'🌿 Edible plant'}[tree.category] || tree.category); }
   if (tree.season) meta.push(tree.season);
   meta.push(new Date(tree.created).toLocaleString());
   tpl.querySelector('.meta').textContent = meta.join(' • ');
@@ -214,11 +220,11 @@ function renderPopup(tree){
 async function openAdd(){
   form.reset();
   formTitle.textContent = 'Add Tree';
-  if (categorySelect) categorySelect.value = 'native_fruits';
   editingId.value = '';
+  if (categorySelect) categorySelect.value = categorySelect.value || 'native_fruits';
+  refillFruitOptions();
   const pos = await goToMyLocation(true);
   if (pos){ lat.value = pos.lat; lng.value = pos.lng; }
-  fruitSelect.value = 'Other'; fruitCustom.value = '';
   dialogEl.showModal();
 }
 function openEdit(id){
@@ -228,8 +234,9 @@ function openEdit(id){
   editingId.value = t.id;
   if (categorySelect) categorySelect.value = t.category || 'native_fruits';
   refillFruitOptions();
-  fruitSelect.value = (FRUIT_EMOJI[t.type] || (MASTER.native_fruits.concat(MASTER.common_fruits, MASTER.edible_plants).some(x=>x.name===t.type) ? 'has' : '')) ? t.type : 'Other';
-  fruitCustom.value = FRUIT_EMOJI[t.type] ? '' : t.type;
+  const known = getNamesForCategory(categorySelect.value);
+  fruitSelect.value = known.includes(t.type) ? t.type : 'Other';
+  fruitCustom.value = (fruitSelect.value === 'Other') ? t.type : '';
   season.value = t.season || '';
   ripeness.value = t.ripeness || '';
   notes.value = t.notes || '';
@@ -265,11 +272,10 @@ async function submitForm(e){
   e?.preventDefault();
   const id = editingId.value || crypto.randomUUID();
   const type = fruitSelect.value === 'Other' ? (fruitCustom.value.trim() || 'Other') : fruitSelect.value;
-  const catVal = categorySelect?.value || 'native_fruits';
   const entry = {
     id,
     type,
-    category: catVal,
+    category: categorySelect?.value || 'native_fruits',
     season: season.value || '',
     ripeness: ripeness.value || '',
     notes: notes.value.trim(),
@@ -289,32 +295,7 @@ async function submitForm(e){
   const idx = trees.findIndex(t=>t.id===id);
   if (idx>=0) trees[idx] = entry; else trees.push(entry);
   saveTrees();
-  
-function getNamesForCategory(catKey){
-  const list = (MASTER[catKey] || []).map(x => x.name);
-  if (list.length) return list;
-  // Fallback legacy set
-  const legacy = new Set(['Apple','Pear','Plum','Peach','Apricot','Orange','Lemon','Lime','Grapefruit','Mulberry','Fig','Olive','Loquat','Cherry','Banana','Mango','Guava','Feijoa','Persimmon','Pomegranate','Berry','Other']);
-  return Array.from(legacy).sort();
-}
-
-function refillFruitOptions(){
-  if (!fruitSelect) return;
-  fruitSelect.innerHTML = '';
-  const catKey = categorySelect?.value || 'native_fruits';
-  const names = getNamesForCategory(catKey);
-  for (const t of names){
-    const opt = document.createElement('option');
-    opt.value = t; opt.textContent = `${emojiForName(t)} ${t}`;
-    fruitSelect.appendChild(opt);
-  }
-  const otherOpt = document.createElement('option');
-  otherOpt.value = 'Other'; otherOpt.textContent = '🌱 Other (custom)';
-  fruitSelect.appendChild(otherOpt);
-  if (fruitCustom) fruitCustom.value = '';
-}
-
-renderAll();
+  renderAll();
   dialogEl.close();
   toast('Saved ✅');
 }
@@ -323,32 +304,7 @@ function delTree(id){
   if (!confirm('Delete this entry?')) return;
   trees = trees.filter(t=>t.id!==id);
   saveTrees();
-  
-function getNamesForCategory(catKey){
-  const list = (MASTER[catKey] || []).map(x => x.name);
-  if (list.length) return list;
-  // Fallback legacy set
-  const legacy = new Set(['Apple','Pear','Plum','Peach','Apricot','Orange','Lemon','Lime','Grapefruit','Mulberry','Fig','Olive','Loquat','Cherry','Banana','Mango','Guava','Feijoa','Persimmon','Pomegranate','Berry','Other']);
-  return Array.from(legacy).sort();
-}
-
-function refillFruitOptions(){
-  if (!fruitSelect) return;
-  fruitSelect.innerHTML = '';
-  const catKey = categorySelect?.value || 'native_fruits';
-  const names = getNamesForCategory(catKey);
-  for (const t of names){
-    const opt = document.createElement('option');
-    opt.value = t; opt.textContent = `${emojiForName(t)} ${t}`;
-    fruitSelect.appendChild(opt);
-  }
-  const otherOpt = document.createElement('option');
-  otherOpt.value = 'Other'; otherOpt.textContent = '🌱 Other (custom)';
-  fruitSelect.appendChild(otherOpt);
-  if (fruitCustom) fruitCustom.value = '';
-}
-
-renderAll();
+  renderAll();
   toast('Deleted');
 }
 
@@ -359,7 +315,7 @@ function exportGeoJSON(){
       type:'Feature',
       id:t.id,
       properties:{
-        type:t.type, season:t.season, ripeness:t.ripeness,
+        type:t.type, category: t.category || null, season:t.season, ripeness:t.ripeness,
         notes:t.notes, created:t.created, photo:t.photoDataUrl||null
       },
       geometry:{ type:'Point', coordinates:[t.lng, t.lat] }
@@ -379,21 +335,23 @@ function importGeoJSONFile(file){
   const reader = new FileReader();
   reader.onload = () => {
     try{
-      const fc = JSON.parse(reader.result);
-      // Accept either GeoJSON FeatureCollection OR our catalog JSON
-      if (fc.native_fruits && fc.common_fruits && fc.edible_plants){
-        MASTER = fc; localStorage.setItem(MASTER_LS_KEY, JSON.stringify(MASTER)); refillFruitOptions(); toast('Catalog loaded ✅'); return;
+      const data = JSON.parse(reader.result);
+      if (data && data.native_fruits && data.common_fruits && data.edible_plants){
+        MASTER = data; localStorage.setItem(MASTER_LS_KEY, JSON.stringify(MASTER));
+        refillFruitOptions();
+        toast('Catalog loaded ✅');
+        return;
       }
-      if (fc.type !== 'FeatureCollection') throw new Error('Not a FeatureCollection');
+      if (data.type !== 'FeatureCollection') throw new Error('Not a FeatureCollection');
       const imported = [];
-      for (const f of fc.features || []){
+      for (const f of data.features || []){
         if (f.geometry?.type !== 'Point') continue;
         const [lngVal, latVal] = f.geometry.coordinates || [];
         const props = f.properties || {};
-        const catVal = categorySelect?.value || 'native_fruits';
-  const entry = {
+        const entry = {
           id: f.id || crypto.randomUUID(),
           type: props.type || 'Other',
+          category: props.category || 'native_fruits',
           season: props.season || '',
           ripeness: props.ripeness || '',
           notes: props.notes || '',
@@ -407,32 +365,7 @@ function importGeoJSONFile(file){
         imported.push(entry);
       }
       saveTrees();
-      
-function getNamesForCategory(catKey){
-  const list = (MASTER[catKey] || []).map(x => x.name);
-  if (list.length) return list;
-  // Fallback legacy set
-  const legacy = new Set(['Apple','Pear','Plum','Peach','Apricot','Orange','Lemon','Lime','Grapefruit','Mulberry','Fig','Olive','Loquat','Cherry','Banana','Mango','Guava','Feijoa','Persimmon','Pomegranate','Berry','Other']);
-  return Array.from(legacy).sort();
-}
-
-function refillFruitOptions(){
-  if (!fruitSelect) return;
-  fruitSelect.innerHTML = '';
-  const catKey = categorySelect?.value || 'native_fruits';
-  const names = getNamesForCategory(catKey);
-  for (const t of names){
-    const opt = document.createElement('option');
-    opt.value = t; opt.textContent = `${emojiForName(t)} ${t}`;
-    fruitSelect.appendChild(opt);
-  }
-  const otherOpt = document.createElement('option');
-  otherOpt.value = 'Other'; otherOpt.textContent = '🌱 Other (custom)';
-  fruitSelect.appendChild(otherOpt);
-  if (fruitCustom) fruitCustom.value = '';
-}
-
-renderAll();
+      renderAll();
       toast(`Imported ${imported.length} point(s)`);
     }catch(err){
       toast('Import failed: ' + err.message);
@@ -444,8 +377,8 @@ renderAll();
 function showStats(){
   const byType = trees.reduce((acc,t)=>{ acc[t.type]=(acc[t.type]||0)+1; return acc; },{});
   const total = trees.length;
-  const kinds = Object.entries(byType).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k}: ${v}`).join('\n');
-  alert(`Total trees: ${total}\n\nBy type:\n${kinds||'(none)'}`);
+  const kinds = Object.entries(byType).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k}: ${v}`).join('\\n');
+  alert(`Total trees: ${total}\\n\\nBy type:\\n${kinds||'(none)'}`);
 }
 
 let toastTimer;
@@ -465,101 +398,6 @@ importInput.addEventListener('change', e => {
   if (file) importGeoJSONFile(file);
   e.target.value = '';
 });
-statsBtn.addEventListener('click', showStats);
-clearBtn.addEventListener('click', () => {
-  if (!confirm('Clear ALL saved entries?')) return;
-  trees = []; saveTrees(); 
-function getNamesForCategory(catKey){
-  const list = (MASTER[catKey] || []).map(x => x.name);
-  if (list.length) return list;
-  // Fallback legacy set
-  const legacy = new Set(['Apple','Pear','Plum','Peach','Apricot','Orange','Lemon','Lime','Grapefruit','Mulberry','Fig','Olive','Loquat','Cherry','Banana','Mango','Guava','Feijoa','Persimmon','Pomegranate','Berry','Other']);
-  return Array.from(legacy).sort();
-}
-
-function refillFruitOptions(){
-  if (!fruitSelect) return;
-  fruitSelect.innerHTML = '';
-  const catKey = categorySelect?.value || 'native_fruits';
-  const names = getNamesForCategory(catKey);
-  for (const t of names){
-    const opt = document.createElement('option');
-    opt.value = t; opt.textContent = `${emojiForName(t)} ${t}`;
-    fruitSelect.appendChild(opt);
-  }
-  const otherOpt = document.createElement('option');
-  otherOpt.value = 'Other'; otherOpt.textContent = '🌱 Other (custom)';
-  fruitSelect.appendChild(otherOpt);
-  if (fruitCustom) fruitCustom.value = '';
-}
-
-renderAll(); toast('Cleared all');
-});
-form.addEventListener('submit', submitForm);
-document.getElementById('cancelBtn').addEventListener('click', ()=>dialogEl.close());
-
-applyFiltersBtn.addEventListener('click', renderAll);
-resetFiltersBtn.addEventListener('click', () => {
-  fType.selectedIndex = -1;
-  fSeason.value=''; fRipeness.value=''; fText.value=''; fHasPhoto.checked=false;
-  
-function getNamesForCategory(catKey){
-  const list = (MASTER[catKey] || []).map(x => x.name);
-  if (list.length) return list;
-  // Fallback legacy set
-  const legacy = new Set(['Apple','Pear','Plum','Peach','Apricot','Orange','Lemon','Lime','Grapefruit','Mulberry','Fig','Olive','Loquat','Cherry','Banana','Mango','Guava','Feijoa','Persimmon','Pomegranate','Berry','Other']);
-  return Array.from(legacy).sort();
-}
-
-function refillFruitOptions(){
-  if (!fruitSelect) return;
-  fruitSelect.innerHTML = '';
-  const catKey = categorySelect?.value || 'native_fruits';
-  const names = getNamesForCategory(catKey);
-  for (const t of names){
-    const opt = document.createElement('option');
-    opt.value = t; opt.textContent = `${emojiForName(t)} ${t}`;
-    fruitSelect.appendChild(opt);
-  }
-  const otherOpt = document.createElement('option');
-  otherOpt.value = 'Other'; otherOpt.textContent = '🌱 Other (custom)';
-  fruitSelect.appendChild(otherOpt);
-  if (fruitCustom) fruitCustom.value = '';
-}
-
-renderAll();
-});
-[fSeason,fRipeness,fText,fHasPhoto].forEach(el => el.addEventListener('change', renderAll));
-clusterToggle.addEventListener('change', () => { useCluster = clusterToggle.checked; 
-function getNamesForCategory(catKey){
-  const list = (MASTER[catKey] || []).map(x => x.name);
-  if (list.length) return list;
-  // Fallback legacy set
-  const legacy = new Set(['Apple','Pear','Plum','Peach','Apricot','Orange','Lemon','Lime','Grapefruit','Mulberry','Fig','Olive','Loquat','Cherry','Banana','Mango','Guava','Feijoa','Persimmon','Pomegranate','Berry','Other']);
-  return Array.from(legacy).sort();
-}
-
-function refillFruitOptions(){
-  if (!fruitSelect) return;
-  fruitSelect.innerHTML = '';
-  const catKey = categorySelect?.value || 'native_fruits';
-  const names = getNamesForCategory(catKey);
-  for (const t of names){
-    const opt = document.createElement('option');
-    opt.value = t; opt.textContent = `${emojiForName(t)} ${t}`;
-    fruitSelect.appendChild(opt);
-  }
-  const otherOpt = document.createElement('option');
-  otherOpt.value = 'Other'; otherOpt.textContent = '🌱 Other (custom)';
-  fruitSelect.appendChild(otherOpt);
-  if (fruitCustom) fruitCustom.value = '';
-}
-
-renderAll(); });
-
-goToMyLocation(true);
-
-// Also support dedicated Catalog loader
 catalogInput?.addEventListener('change', e => {
   const file = e.target.files?.[0]; if (!file) return;
   const reader = new FileReader();
@@ -574,3 +412,22 @@ catalogInput?.addEventListener('change', e => {
   };
   reader.readAsText(file);
 });
+statsBtn.addEventListener('click', showStats);
+clearBtn.addEventListener('click', () => {
+  if (!confirm('Clear ALL saved entries?')) return;
+  trees = []; saveTrees(); renderAll(); toast('Cleared all');
+});
+form.addEventListener('submit', submitForm);
+document.getElementById('cancelBtn').addEventListener('click', ()=>dialogEl.close());
+
+applyFiltersBtn.addEventListener('click', renderAll);
+resetFiltersBtn.addEventListener('click', () => {
+  fType.selectedIndex = -1;
+  fSeason.value=''; fRipeness.value=''; fText.value=''; fHasPhoto.checked=false;
+  renderAll();
+});
+[fSeason,fRipeness,fText,fHasPhoto].forEach(el => el.addEventListener('change', renderAll));
+clusterToggle.addEventListener('change', () => { useCluster = clusterToggle.checked; renderAll(); });
+
+refillFruitOptions();
+goToMyLocation(true);
